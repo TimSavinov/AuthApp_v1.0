@@ -3,14 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller; 
-use App\User;
+use App\Entity\User;
+use App\Entity\UsersVerification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use App\Mail\VerificationEmail;
+use Mail;
+
 
 
 class AuthController extends Controller
-{
+{ 
 
     public function register(Request $request)
     {
@@ -28,16 +32,44 @@ class AuthController extends Controller
                 'errors' => $v->errors()
             ], 422);
         }
-        $user = new User;
-    
-        $user->name = $request->name;
-        $user->surname = $request->surname;
-        $user->phone = $request->phone;
-        $user->email = $request->email;
-        $user->password = bcrypt($request->password);
-        $user->save();
+
+
+        $user = User::create([
+        'name' => $request->name,
+        'surname' => $request->surname,
+        'phone' => $request->phone,
+        'email' => $request->email,
+        'password' => bcrypt($request->password)
+        ]);
+
+        $verifyUser = UsersVerification::create([
+            'user_id' => $user->id,
+            'token' => sha1(time())
+        ]);
+
+        Mail::to($user->email)->send(new VerificationEmail($user));
+
         return response()->json(['status' => 'success'], 200);
     }
+
+    public function verifyEmail($token)
+     {
+        $verifyUser = UsersVerification::where('token', $token)->first();
+        if(isset($verifyUser) ){
+            $user = $verifyUser->user;
+            if(!$user->is_verified) {
+            $verifyUser->user->is_verified = 1;
+            $verifyUser->user->save();
+            UsersVerification::where('token', $token)->delete();
+            $status = "Your e-mail is verified. You can now login.";
+            } else {
+            $status = "Your e-mail is already verified. You can now login.";
+            }
+        } else {
+            return response()->json(['status' => 'error'], 500);
+        }
+        return response()->json(['status' => $status], 200);
+    }   
 
     public function login(Request $request)
     {
@@ -60,6 +92,8 @@ class AuthController extends Controller
 
     public function user(Request $request)
     {
+        dd($this->guard());
+
         return response()->json([
             'status' => 'success',
         ]);

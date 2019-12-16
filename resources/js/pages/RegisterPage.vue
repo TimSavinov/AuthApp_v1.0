@@ -20,13 +20,12 @@
             
               </v-toolbar>
               <v-card-text>
-                <v-form>
+                <v-form ref="form">
                   <v-text-field
-                  v-model="user.name"
+                    v-model="user.name"
                     label="Name"
-                    name="name"
                     prepend-icon="account_box"
-                    type="text"
+                    :rules="generalRules"
                   />
 
                   <v-text-field
@@ -36,6 +35,7 @@
                     name="surname"
                     prepend-icon="account_box"
                     type="text"
+                    :rules="generalRules"
                   />
                   <v-text-field
                   v-model="user.email"
@@ -44,6 +44,7 @@
                     name="email"
                     prepend-icon="email"
                     type="email"
+                    :rules="generalRules"
                            />
                 
                  <v-text-field
@@ -52,6 +53,7 @@
                     name="phone"
                     prepend-icon="call"
                     type="phone"
+                    :rules="numericRules"
                   />
 
                   <v-text-field
@@ -61,6 +63,7 @@
                     name="password"
                     prepend-icon="assignment"
                     type="password"
+                    :rules="generalRules"
                   />
 
                   <v-text-field
@@ -70,6 +73,7 @@
                     name="password-confirmation"
                     prepend-icon="assignment"
                     type="password"
+                    :rules="generalRules"
                   />
 
                 </v-form>
@@ -81,8 +85,21 @@
                   </template>
                    <span>Click to get back</span>
                 </v-tooltip>
+                <div class="errors-raw">
+                <div class="back-errors" v-for="error in backEndError" :key="error.length">{{ error[0] }} </div>
+                </div>
                 <v-spacer />
-                <v-btn color="primary" @click="register">Register</v-btn>
+                <v-dialog max-width="27%">
+                   <template v-slot:activator="{ on }">
+                     <v-btn color="primary" @click="attempt" v-on="on">Register</v-btn>
+                   </template>
+                   <v-card class="info"  v-if="isValid">
+                     <v-card-text>
+                       You have successfully created an account!
+                        Please check your inbox and follow the confirmation email
+                     </v-card-text>
+                   </v-card>
+                </v-dialog>
               </v-card-actions>
             </v-card>
           </v-col>
@@ -99,7 +116,23 @@ props: {
     },
 
     data: () => ({
-        user: {}
+        user: {
+          name: '',
+          surname: '',
+          phone: '',
+          email: '',
+          password: '',
+          password_confirmation: ''
+        },
+        isValid: false,
+        backEndError: '',
+        generalRules: [
+          v => v.length > 0 || 'the field is required'
+        ],
+        numericRules: [
+          v => !isNaN(v) || 'the phone should be a number',
+          v => v.length > 0 || 'the field is required'
+        ]
     }),
 
 methods: {
@@ -107,18 +140,27 @@ methods: {
        this.$router.push('/');
    },
 
+   attempt(){
+   if(this.$refs.form.validate()){
+       this.register();
+        this.isValid = true;
+   }
+   },
+
    register(){
        console.log(this.user);
-        this.$auth.register({
+       setTimeout(() => {this.$auth.register({
           data: this.user,
           success: function (res) {
+
             console.log(res);
           },
           error: function (res) {
-            console.log(res.response.data.errors);
+            this.backEndError = res.response.data.errors;
+            console.log(this.backEndError);
           }
     
-   });
+   }), 3000 });
 }
 }
 
@@ -130,5 +172,12 @@ methods: {
 
     width: 100%;
     text-align: center;
+}
+
+.back-errors{
+    text-align: center;
+    color: #d6e131;
+    display: table;
+    font-size: 12px;
 }
 </style>

@@ -80,12 +80,14 @@ props: {
       login(){ 
         this.$auth.login({
           params: this.user,
-          success: function(res) {
-             console.log(res);
+          success: function() {
+             console.log('user', this.$auth.user());
           },
           error: function(err) {
              console.log(err);
           },
+          rememberMe: true,
+          fetchUser: true
       });
 
       }
