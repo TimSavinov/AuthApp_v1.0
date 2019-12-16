@@ -1,6 +1,6 @@
 <?php
 namespace App\Http\Controllers;
-use App\User;
+use App\Entity\User;
 use Illuminate\Http\Request;
 class UserController extends Controller
 {

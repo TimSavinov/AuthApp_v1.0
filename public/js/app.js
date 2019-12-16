@@ -3284,12 +3284,14 @@ __webpack_require__.r(__webpack_exports__);
     login: function login() {
       this.$auth.login({
         params: this.user,
-        success: function success(res) {
-          console.log(res);
+        success: function success() {
+          console.log('user', this.$auth.user());
         },
         error: function error(err) {
           console.log(err);
-        }
+        },
+        rememberMe: true,
+        fetchUser: true
       });
     }
   }
@@ -3399,29 +3401,74 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 /* harmony default export */ __webpack_exports__["default"] = ({
   props: {
     source: String
   },
   data: function data() {
     return {
-      user: {}
+      user: {
+        name: '',
+        surname: '',
+        phone: '',
+        email: '',
+        password: '',
+        password_confirmation: ''
+      },
+      isValid: false,
+      backEndError: '',
+      generalRules: [function (v) {
+        return v.length > 0 || 'the field is required';
+      }],
+      numericRules: [function (v) {
+        return !isNaN(v) || 'the phone should be a number';
+      }, function (v) {
+        return v.length > 0 || 'the field is required';
+      }]
     };
   },
   methods: {
     back: function back() {
       this.$router.push('/');
     },
+    attempt: function attempt() {
+      if (this.$refs.form.validate()) {
+        this.register();
+        this.isValid = true;
+      }
+    },
     register: function register() {
+      var _this = this;
+
       console.log(this.user);
-      this.$auth.register({
-        data: this.user,
-        success: function success(res) {
-          console.log(res);
-        },
-        error: function error(res) {
-          console.log(res.response.data.errors);
-        }
+      setTimeout(function () {
+        _this.$auth.register({
+          data: _this.user,
+          success: function success(res) {
+            console.log(res);
+          },
+          error: function error(res) {
+            this.backEndError = res.response.data.errors;
+            console.log(this.backEndError);
+          }
+        }), 3000;
       });
     }
   }
@@ -3479,7 +3526,7 @@ exports = module.exports = __webpack_require__(/*! ../../../node_modules/css-loa
 
 
 // module
-exports.push([module.i, "\n.v-toolbar__title[data-v-036b264a] {\r\n\r\n    width: 100%;\r\n    text-align: center;\n}\r\n", ""]);
+exports.push([module.i, "\n.v-toolbar__title[data-v-036b264a] {\r\n\r\n    width: 100%;\r\n    text-align: center;\n}\n.back-errors[data-v-036b264a]{\r\n    text-align: center;\r\n    color: #d6e131;\r\n    display: table;\r\n    font-size: 12px;\n}\r\n", ""]);
 
 // exports
 
@@ -6257,13 +6304,13 @@ var render = function() {
                             [
                               _c(
                                 "v-form",
+                                { ref: "form" },
                                 [
                                   _c("v-text-field", {
                                     attrs: {
                                       label: "Name",
-                                      name: "name",
                                       "prepend-icon": "account_box",
-                                      type: "text"
+                                      rules: _vm.generalRules
                                     },
                                     model: {
                                       value: _vm.user.name,
@@ -6280,7 +6327,8 @@ var render = function() {
                                       id: "surname",
                                       name: "surname",
                                       "prepend-icon": "account_box",
-                                      type: "text"
+                                      type: "text",
+                                      rules: _vm.generalRules
                                     },
                                     model: {
                                       value: _vm.user.surname,
@@ -6297,7 +6345,8 @@ var render = function() {
                                       id: "email",
                                       name: "email",
                                       "prepend-icon": "email",
-                                      type: "email"
+                                      type: "email",
+                                      rules: _vm.generalRules
                                     },
                                     model: {
                                       value: _vm.user.email,
@@ -6313,7 +6362,8 @@ var render = function() {
                                       label: "Phone",
                                       name: "phone",
                                       "prepend-icon": "call",
-                                      type: "phone"
+                                      type: "phone",
+                                      rules: _vm.numericRules
                                     },
                                     model: {
                                       value: _vm.user.phone,
@@ -6330,7 +6380,8 @@ var render = function() {
                                       label: "Password",
                                       name: "password",
                                       "prepend-icon": "assignment",
-                                      type: "password"
+                                      type: "password",
+                                      rules: _vm.generalRules
                                     },
                                     model: {
                                       value: _vm.user.password,
@@ -6347,7 +6398,8 @@ var render = function() {
                                       label: "Password confirmation",
                                       name: "password-confirmation",
                                       "prepend-icon": "assignment",
-                                      type: "password"
+                                      type: "password",
+                                      rules: _vm.generalRules
                                     },
                                     model: {
                                       value: _vm.user.password_confirmation,
@@ -6410,15 +6462,68 @@ var render = function() {
                                 ]
                               ),
                               _vm._v(" "),
+                              _c(
+                                "div",
+                                { staticClass: "errors-raw" },
+                                _vm._l(_vm.backEndError, function(error) {
+                                  return _c(
+                                    "div",
+                                    {
+                                      key: error.length,
+                                      staticClass: "back-errors"
+                                    },
+                                    [_vm._v(_vm._s(error[0]) + " ")]
+                                  )
+                                }),
+                                0
+                              ),
+                              _vm._v(" "),
                               _c("v-spacer"),
                               _vm._v(" "),
                               _c(
-                                "v-btn",
+                                "v-dialog",
                                 {
-                                  attrs: { color: "primary" },
-                                  on: { click: _vm.register }
+                                  attrs: { "max-width": "27%" },
+                                  scopedSlots: _vm._u([
+                                    {
+                                      key: "activator",
+                                      fn: function(ref) {
+                                        var on = ref.on
+                                        return [
+                                          _c(
+                                            "v-btn",
+                                            _vm._g(
+                                              {
+                                                attrs: { color: "primary" },
+                                                on: { click: _vm.attempt }
+                                              },
+                                              on
+                                            ),
+                                            [_vm._v("Register")]
+                                          )
+                                        ]
+                                      }
+                                    }
+                                  ])
                                 },
-                                [_vm._v("Register")]
+                                [
+                                  _vm._v(" "),
+                                  _vm.isValid
+                                    ? _c(
+                                        "v-card",
+                                        { staticClass: "info" },
+                                        [
+                                          _c("v-card-text", [
+                                            _vm._v(
+                                              "\n                     You have successfully created an account!\n                      Please check your inbox and follow the confirmation email\n                   "
+                                            )
+                                          ])
+                                        ],
+                                        1
+                                      )
+                                    : _vm._e()
+                                ],
+                                1
                               )
                             ],
                             1
